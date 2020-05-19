@@ -1,13 +1,14 @@
 package com.example.book.service.impl;
 
-import com.example.book.controller.objects.CreateBookInput;
-import com.example.book.controller.objects.UpdateBookInput;
-import com.example.book.data.Book;
+import com.example.book.controller.DTO.BookDTO;
+import com.example.book.model.Book;
 import com.example.book.repository.BookRepository;
 import com.example.book.service.BookService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,15 +28,15 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Book addBook(CreateBookInput createBookInput) {
+    public Book addBook(BookDTO bookDTO) {
 
         Book newBook = new Book(
-                createBookInput.getISBN(),
-                createBookInput.getName(),
-                createBookInput.getDescription(),
-                createBookInput.getLanguage(),
-                createBookInput.getAuthor(),
-                createBookInput.getPrice());
+                bookDTO.getISBN(),
+                bookDTO.getName(),
+                bookDTO.getDescription(),
+                bookDTO.getLanguage(),
+                bookDTO.getAuthor(),
+                bookDTO.getPrice());
 
         bookRepository.save(newBook);
         logger.info("New book entry added with ID: {}", newBook.getBookID());
@@ -45,14 +46,14 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Book updateBook(UpdateBookInput updateBookInput, Long isbn) {
+    public Book updateBook(BookDTO bookDTO, Long isbn) {
 
         Book updateBook = bookRepository.findByISBN(isbn);
-        updateBook.setAuthor(updateBookInput.getAuthor());
-        updateBook.setName(updateBookInput.getName());
-        updateBook.setDescription(updateBookInput.getDescription());
-        updateBook.setLanguage(updateBookInput.getLanguage());
-        updateBook.setPrice(updateBookInput.getPrice());
+        updateBook.setAuthor(bookDTO.getAuthor());
+        updateBook.setName(bookDTO.getName());
+        updateBook.setDescription(bookDTO.getDescription());
+        updateBook.setLanguage(bookDTO.getLanguage());
+        updateBook.setPrice(bookDTO.getPrice());
 
         bookRepository.save(updateBook);
         logger.info("Book entry updated with ISBN: {}", isbn);
@@ -81,7 +82,8 @@ public class BookServiceImpl implements BookService {
 
     //TODO: Add pagination and filtration
     @Override
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<Book> getAllBooks(int page, int size) {
+        Pageable paging = PageRequest.of(page, size);
+        return bookRepository.findAll(paging).getContent();
     }
 }

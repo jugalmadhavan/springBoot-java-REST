@@ -1,6 +1,6 @@
 package com.example.book.repository;
 
-import com.example.book.data.Book;
+import com.example.book.model.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

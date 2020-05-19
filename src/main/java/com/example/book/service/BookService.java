@@ -1,8 +1,7 @@
 package com.example.book.service;
 
-import com.example.book.controller.objects.CreateBookInput;
-import com.example.book.controller.objects.UpdateBookInput;
-import com.example.book.data.Book;
+import com.example.book.controller.DTO.BookDTO;
+import com.example.book.model.Book;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,13 +9,13 @@ import java.util.List;
 @Service
 public interface BookService {
 
-    Book addBook(CreateBookInput createBookInput);
+    Book addBook(BookDTO bookDTO);
 
-    Book updateBook(UpdateBookInput updateBookInput, Long isbn);
+    Book updateBook(BookDTO bookDTO, Long isbn);
 
     Book getBook(Long isbn);
 
     String deleteBook(Long isbn);
 
-    List<Book> getAllBooks();
+    List<Book> getAllBooks(int page, int size);
 }

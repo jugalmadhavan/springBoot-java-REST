@@ -1,8 +1,7 @@
 package com.example.book.controller;
 
-import com.example.book.controller.objects.CreateBookInput;
-import com.example.book.controller.objects.UpdateBookInput;
-import com.example.book.data.Book;
+import com.example.book.controller.DTO.BookDTO;
+import com.example.book.model.Book;
 import com.example.book.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,10 +11,25 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping("/{version}")
 public class BookController {
 
     static final String VERSION_NOT_SUPPORTED = "This API version is not supported";
     static final String BAD_REQUEST_MSG = "Invalid input";
+
+    private enum ApiVersion {
+        Version1("v1");
+
+        private String version;
+
+        ApiVersion(String version) {
+            this.version = version;
+        }
+
+        public String geVersion() {
+            return version;
+        }
+    }
 
     private BookService bookService;
 
@@ -24,17 +38,17 @@ public class BookController {
         this.bookService = bookService;
     }
 
-    @PostMapping("/{version}/books")
+    @PostMapping("/books")
 //    @PreAuthorize("hasAnyAuthority('SUPPORT','ADMIN')")
-    public ResponseEntity<Book> addBook(@RequestBody CreateBookInput createBookInput, @PathVariable String version) {
+    public ResponseEntity<BookDTO> addBook(@RequestBody BookDTO bookDTO, @PathVariable String version) {
 
         ResponseEntity responseEntity;
 
-        if (checkValidInput(createBookInput)) {
+        if (checkValidInput(bookDTO)) {
             responseEntity = new ResponseEntity(BAD_REQUEST_MSG, HttpStatus.BAD_REQUEST);
         } else {
-            if (version.equalsIgnoreCase("v1")) {
-                responseEntity = new ResponseEntity<>(bookService.addBook(createBookInput), HttpStatus.OK);
+            if (checkVersion(version)) {
+                responseEntity = new ResponseEntity<>(bookService.addBook(bookDTO), HttpStatus.OK);
             } else {
                 responseEntity = new ResponseEntity(VERSION_NOT_SUPPORTED, HttpStatus.HTTP_VERSION_NOT_SUPPORTED);
             }
@@ -43,20 +57,20 @@ public class BookController {
 
     }
 
-    private boolean checkValidInput(@RequestBody CreateBookInput createBookInput) {
-        return createBookInput.getISBN() == null || createBookInput.getName() == null ||
-                createBookInput.getDescription() == null || createBookInput.getLanguage() == null ||
-                createBookInput.getAuthor() == null || createBookInput.getPrice() == 0;
+    private boolean checkValidInput(BookDTO bookDTO) {
+        return bookDTO.getISBN() == null || bookDTO.getName() == null ||
+                bookDTO.getDescription() == null || bookDTO.getLanguage() == null ||
+                bookDTO.getAuthor() == null || bookDTO.getPrice() == 0;
     }
 
-    @PutMapping("/{version}/books/{isbn}")
+    @PutMapping("/books/{isbn}")
 //    @PreAuthorize("hasAnyAuthority('SUPPORT','ADMIN')")
-    public ResponseEntity<Book> updateBook(@RequestBody UpdateBookInput updateBookInput, @PathVariable String version, @PathVariable Long isbn) {
+    public ResponseEntity<Book> updateBook(@RequestBody BookDTO bookDTO, @PathVariable String version, @PathVariable Long isbn) {
 
         ResponseEntity<Book> responseEntity;
 
-        if (version.equalsIgnoreCase("v1")) {
-            responseEntity = new ResponseEntity<>(bookService.updateBook(updateBookInput, isbn), HttpStatus.OK);
+        if (checkVersion(version)) {
+            responseEntity = new ResponseEntity<>(bookService.updateBook(bookDTO, isbn), HttpStatus.OK);
         } else {
             responseEntity = new ResponseEntity(VERSION_NOT_SUPPORTED, HttpStatus.HTTP_VERSION_NOT_SUPPORTED);
         }
@@ -64,14 +78,20 @@ public class BookController {
 
     }
 
-    @GetMapping("/{version}/books/{isbn}")
+    @GetMapping("/books/{isbn}")
 //    @PreAuthorize("hasAnyAuthority('SUPPORT','ADMIN')")
     public ResponseEntity<Book> getBook(@PathVariable String version, @PathVariable Long isbn) {
 
         ResponseEntity responseEntity;
 
-        if (version.equalsIgnoreCase("v1")) {
-            responseEntity = new ResponseEntity<>(bookService.getBook(isbn), HttpStatus.OK);
+        if (checkVersion(version)) {
+            Book book = bookService.getBook(isbn);
+            if (book == null) {
+                responseEntity = new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            } else {
+                responseEntity = new ResponseEntity<>(bookService.getBook(isbn), HttpStatus.OK);
+            }
+
         } else {
             responseEntity = new ResponseEntity(VERSION_NOT_SUPPORTED, HttpStatus.HTTP_VERSION_NOT_SUPPORTED);
         }
@@ -79,13 +99,13 @@ public class BookController {
 
     }
 
-    @DeleteMapping("/{version}/books/{isbn}")
+    @DeleteMapping("/books/{isbn}")
 //    @PreAuthorize("hasAnyAuthority('SUPPORT','ADMIN')")
     public ResponseEntity<String> deleteBook(@PathVariable String version, @PathVariable Long isbn) {
 
         ResponseEntity<String> responseEntity;
 
-        if (version.equalsIgnoreCase("v1")) {
+        if (checkVersion(version)) {
             responseEntity = new ResponseEntity<>(bookService.deleteBook(isbn), HttpStatus.OK);
         } else {
             responseEntity = new ResponseEntity<>(VERSION_NOT_SUPPORTED, HttpStatus.HTTP_VERSION_NOT_SUPPORTED);
@@ -94,19 +114,24 @@ public class BookController {
 
     }
 
-    @GetMapping("/{version}/books")
+    @GetMapping("/books")
 //    @PreAuthorize("hasAnyAuthority('SUPPORT','ADMIN')")
-    public ResponseEntity<List<Book>> getAllBooks(@PathVariable String version) {
+    public ResponseEntity<List<Book>> getAllBooks(@PathVariable String version, @RequestParam(defaultValue = "0") int page,
+                                                  @RequestParam(defaultValue = "10") int size) {
 
         ResponseEntity<List<Book>> responseEntity;
 
-        if (version.equalsIgnoreCase("v1")) {
-            responseEntity = new ResponseEntity<>(bookService.getAllBooks(), HttpStatus.OK);
+        if (checkVersion(version)) {
+            responseEntity = new ResponseEntity<>(bookService.getAllBooks(page,size), HttpStatus.OK);
         } else {
             responseEntity = new ResponseEntity(VERSION_NOT_SUPPORTED, HttpStatus.HTTP_VERSION_NOT_SUPPORTED);
         }
         return responseEntity;
 
+    }
+
+    private boolean checkVersion(String version) {
+        return version.equalsIgnoreCase(ApiVersion.Version1.geVersion());
     }
 
 }
