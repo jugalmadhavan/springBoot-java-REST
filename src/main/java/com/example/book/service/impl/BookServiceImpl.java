@@ -79,6 +79,7 @@ public class BookServiceImpl implements BookService {
         return responseMsg;
     }
 
+    //TODO: Add pagination and filtration
     @Override
     public List<Book> getAllBooks() {
         return bookRepository.findAll();

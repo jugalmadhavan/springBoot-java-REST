@@ -4,6 +4,7 @@ import com.example.book.controller.objects.CreateBookInput;
 import com.example.book.controller.objects.UpdateBookInput;
 import com.example.book.data.Book;
 import com.example.book.service.BookService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,9 @@ public class BookController {
     static final String VERSION_NOT_SUPPORTED = "This API version is not supported";
     static final String BAD_REQUEST_MSG = "Invalid input";
 
-    private final BookService bookService;
+    private BookService bookService;
 
+    @Autowired
     public BookController(BookService bookService) {
         this.bookService = bookService;
     }
